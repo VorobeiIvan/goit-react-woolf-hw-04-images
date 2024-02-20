@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import Searchbar from './Searchbar';
 import ImageGallery from './ImageGallery';
 import Button from './Button';
@@ -6,92 +6,76 @@ import Modal from './Modal';
 import Loader from './Loader';
 import fetchImages from './api/fetchImages';
 
-class App extends Component {
-  state = {
-    query: '',
-    images: [],
-    loading: false,
-    error: null,
-    page: 1,
-    largeImageURL: '',
-    showModal: false,
-    allImagesLoaded: false,
-  };
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [allImagesLoaded, setAllImagesLoaded] = useState(false);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    if (prevState.query !== query || prevState.page !== page) {
-      this.fetchImagesData(query, page);
+  useEffect(() => {
+    if (query !== '' && page !== 0) {
+      fetchImagesData(query, page);
     }
-  }
+  }, [query, page]);
 
-  fetchImagesData = async (query, page) => {
-    this.setState({ loading: true });
+  const fetchImagesData = async (query, page) => {
+    setLoading(true);
     try {
       const data = await fetchImages(query, page);
       const { hits, totalHits } = data;
       if (hits.length === 0) {
-        this.setState({ allImagesLoaded: true });
+        setAllImagesLoaded(true);
       }
-      this.setState(prevState => ({
-        images: [...prevState.images, ...hits],
-        error: hits.length === 0 ? 'No images found' : null,
-        allImagesLoaded: page >= Math.ceil(totalHits / 12),
-      }));
+      setImages(prevImages => [...prevImages, ...hits]);
+      setError(hits.length === 0 ? 'No images found' : null);
+      setAllImagesLoaded(page >= Math.ceil(totalHits / 12));
     } catch (error) {
-      this.setState({ error: error.message, loading: false });
+      setError('Error fetching images. Please try again later.');
     } finally {
-      this.setState({ loading: false });
+      setLoading(false);
     }
   };
 
-  handleFormSubmit = query => {
+  const handleFormSubmit = query => {
     if (query.trim() !== '') {
-      this.setState({ query, images: [], page: 1, allImagesLoaded: false });
+      setQuery(query);
+      setImages([]);
+      setPage(1);
+      setAllImagesLoaded(false);
     }
   };
 
-  loadMoreImages = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const loadMoreImages = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  handleImageClick = largeImageURL => {
-    this.setState({ largeImageURL, showModal: true });
+  const handleImageClick = largeImageURL => {
+    setLargeImageURL(largeImageURL);
+    setShowModal(true);
   };
 
-  closeModal = () => {
-    this.setState({ showModal: false, largeImageURL: '' });
+  const closeModal = () => {
+    setShowModal(false);
+    setLargeImageURL('');
   };
 
-  render() {
-    const {
-      images,
-      loading,
-      error,
-      showModal,
-      largeImageURL,
-      allImagesLoaded,
-    } = this.state;
-
-    return (
-      <div className="App">
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        {error && <p>{error}</p>}
-        {loading && <Loader />}
-        <ImageGallery
-          images={images}
-          handleImageClick={this.handleImageClick}
-        />
-        {images.length > 0 && !loading && !allImagesLoaded && (
-          <Button onClick={this.loadMoreImages}>Load more</Button>
-        )}
-        {allImagesLoaded && <p>All images loaded for this query.</p>}
-        {showModal && (
-          <Modal src={largeImageURL} alt="" onClose={this.closeModal} />
-        )}
-      </div>
-    );
-  }
-}
+  return (
+    <div className="App">
+      <Searchbar onSubmit={handleFormSubmit} />
+      {error && <p>{error}</p>}
+      {loading && <Loader />}
+      <ImageGallery images={images} handleImageClick={handleImageClick} />
+      {images.length > 0 && !loading && !allImagesLoaded && (
+        <Button onClick={loadMoreImages}>Load more</Button>
+      )}
+      {allImagesLoaded && <p>All images loaded for this query.</p>}
+      {showModal && <Modal src={largeImageURL} alt="" onClose={closeModal} />}
+    </div>
+  );
+};
 
 export default App;
