@@ -8,9 +8,11 @@ const Searchbar = ({ onSubmit }) => {
   };
 
   const handleSubmit = event => {
-    event.preventDefault();
-    onSubmit(query);
-    setQuery('');
+    if (query.trim() !== '') {
+      event.preventDefault();
+      onSubmit(query);
+      setQuery('');
+    }
   };
 
   return (

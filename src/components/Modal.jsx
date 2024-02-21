@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 
-const Modal = ({ handleClose, show, children }) => {
+const Modal = ({ src, alt, onClose }) => {
   useEffect(() => {
     const handleKeyPress = event => {
       if (event.keyCode === 27) {
-        handleClose();
+        onClose();
       }
     };
 
@@ -12,13 +12,22 @@ const Modal = ({ handleClose, show, children }) => {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [handleClose]);
+  }, [onClose]);
 
-  const showHideClassName = show ? 'modal display-block' : 'modal display-none';
+  const handleBackdropClick = e => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
-    <div className={showHideClassName}>
-      <section className="modal-main">{children}</section>
+    <div className="Overlay" onClick={handleBackdropClick}>
+      <div className="Modal">
+        <img src={src} alt={alt} />
+        <button type="button" onClick={onClose}>
+          Close modal
+        </button>
+      </div>
     </div>
   );
 };

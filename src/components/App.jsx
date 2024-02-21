@@ -17,11 +17,10 @@ const App = () => {
   const [allImagesLoaded, setAllImagesLoaded] = useState(false);
 
   useEffect(() => {
-    if (query !== '' && page !== 0) {
-      fetchImagesData(query, page);
+    if (query !== '') {
+      fetchImagesData(query, page); 
     }
-  }, [query, page]);
-
+  }, [query, page]); 
   const fetchImagesData = async (query, page) => {
     setLoading(true);
     try {
@@ -30,7 +29,11 @@ const App = () => {
       if (hits.length === 0) {
         setAllImagesLoaded(true);
       }
-      setImages(prevImages => [...prevImages, ...hits]);
+        if (page === 1) {
+        setImages(hits);
+      } else {
+        setImages(prevImages => [...prevImages, ...hits]);
+      }
       setError(hits.length === 0 ? 'No images found' : null);
       setAllImagesLoaded(page >= Math.ceil(totalHits / 12));
     } catch (error) {
@@ -41,12 +44,10 @@ const App = () => {
   };
 
   const handleFormSubmit = query => {
-    if (query.trim() !== '') {
-      setQuery(query);
-      setImages([]);
-      setPage(1);
-      setAllImagesLoaded(false);
-    }
+    setQuery(query);
+    setPage(1); 
+    setImages([]); 
+    setAllImagesLoaded(false);
   };
 
   const loadMoreImages = () => {
